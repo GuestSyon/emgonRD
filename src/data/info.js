@@ -1,6 +1,7 @@
 
 import * as THREE from 'three';
 import { FlakesTexture } from 'three/examples/jsm/textures/FlakesTexture.js';
+import {Tween, autoPlay, Easing} from "es6-tween";
 
 import imgBloomBrake from '../assets/images/bloom-brake.png';
 import imgBloomRed from '../assets/images/bloom_red.png';
@@ -32,6 +33,7 @@ import imgEnvNZ from '../assets/images/nz.png';
 
 import imgLeatherNormal from '../assets/images/leather_normal_0.jpg';
 
+autoPlay(true);
 const imgEnv0Arr = [imgEnvPX, imgEnvNX, imgEnvPY, imgEnvNY, imgEnvPZ, imgEnvNZ];
 
 export const modelH = 4, serverUrl = 'https://rungra888.com/emogonRD/', apiUrl =  serverUrl + 'admin/';
@@ -87,6 +89,18 @@ export function SetLogoImg(logoImg, logoMesh) {
 	const logoFileName = window.location.hostname==="localhost"?'test.png':logoImg+realExt;
 	logoMesh.material.map = GetMap('./logo/'+logoFileName);
 	logoMesh.material.needsUpdate = true;
+}
+
+export function SetTween(obj, attr, info, easeTime) {
+	var tweenData = {};
+	const easeType = Easing.Cubic.InOut;
+	if 		(attr === "opacity") tweenData = {'opacity':info };
+	else if (attr === "position") tweenData = {'position.x':info.x, 'position.y':info.y, 'position.z':info.z };
+	else if (attr === "intensity") tweenData = {'intensity':info };
+	else if (attr === "scale") tweenData = {'scale.x':info.x, 'scale.y':info.y, 'scale.z':info.z };
+	else if (attr === "fov") tweenData = {'fov':info };
+	// else if (attr === "color") tweenData = {'r': info, 'g':info, 'b':info};
+	new Tween(obj).to( tweenData , easeTime ).easing(easeType).start();
 }
 
 export function SetColor(bodyMeshArr, selCol) {
@@ -150,7 +164,7 @@ export function CustomModel(object, self, gltf) {
 		mapLeatherNormal = GetMap(imgLeatherNormal),
 		simGreyMat = new THREE.MeshPhongMaterial({envMap, color:0x767979, reflectivity:0.6}); // 909898, 0.8 ;
 		// mapBloomBlue.wrapS = mapBloomBlue.wrapT = THREE.RepeatWrapping;
-	self.goldMat = bodyMat.clone(); self.goldMat.reflectivity = 1; self.goldMat.color.setHex(0x605D3C);
+	self.goldMat = bodyMat.clone(); self.goldMat.reflectivity = 1; self.goldMat.color.setHex(0x605D3C); self.goldMat.side = 2;
 	object.traverse(child => {
 		if (child.name.includes('body')) { child.material = bodyMat; self.bodyMeshArr.push(child); }
 		if (child.name.includes('PLATTFORM')) self.bottomArr.push(child);

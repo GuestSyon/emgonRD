@@ -140,35 +140,6 @@ export default class StartTempComponent extends React.Component {
 								src={imgArrow} alt='' style={{top:arrowT}}></img> }
 						</div>
 					)}
-					{/* {!this.props.device &&
-						<div className='type-line proto-line'>
-							<div className='type-title'>
-								<div>{GetLangLabel(labelOther.specialVehicles, lan)}</div>
-								<div> & {GetLangLabel(labelOther.prototypes, lan)}</div>
-							</div>
-							<div className='content-wrapper'>
-								<div className='type-content flex' >
-									{protoArr.map(item=>
-										<div className='part-item' key={item.key}>
-											<div className='part-img flex'>
-												<img src={serverUrl+'images/'+item.img+'.jpg'}  onClick={() => {
-													const bottomKey = item.key.includes('space')?'spaceXl':'easyTwo';
-													this.props.callMapPage('custom', bottomKey, item.key);
-												} } style={{width:wImgPremade}} alt=''></img>
-											</div>
-											<div className='part-text flex'>
-												<div className='part-title'>
-													<label className='main-label'>{GetLangLabel(item, lan)}</label>
-													<label className='sub-label'> - {GetLangLabel(item, lan, 'small')}</label>
-												</div>
-												<div className='part-price'>ab EUR {item.price} inkl. MWSt</div>
-											</div>
-										</div>
-									)}
-								</div>
-							</div>
-						</div>
-					} */}
 				</div>
 			</div>
 		);

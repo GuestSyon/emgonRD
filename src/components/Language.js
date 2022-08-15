@@ -28,7 +28,7 @@ export default class LanguageComponent extends React.Component {
 				<div className='flag-out-wrapper'>
 					<div className={`flag-list ${showList?'active':''}`}>
 						<img className='list-back' alt='' src={imgLanBack}></img>
-						<div className='flag-list-wrapper'>
+						<div className='flag-list-wrapper flex'>
 							{lanArr.map(item => 
 								<img className={`lang-item`} onClick={() => {this.props.setLan(item.key);}} src={item.img} alt='' key={item.key}></img>
 							)}

@@ -162,10 +162,12 @@
 @media (orientation: portrait) {
 	.mobile .side { width: calc(100vw - 5px); height: 40%; top: 60%; overflow-y: auto; }
 	.mobile .side .side-wrapper {height: auto;}
+	.mobile.iPad .side { width: 600px; margin: 0px calc(50% - 300px);}
 }
 
 @media (orientation: landscape) {
 	.mobile .side { width: 40vw; right: 0px;}
+	.mobile.iPad .side { width: 400px;}
 	.mobile .side-outer .outer-line {font-size: 20px;}
 	.mobile .side-outer .outer-price {font-size: 20px; bottom: 10px;}
 	.mobile .side-header .header-top label {font-size: 20px;}

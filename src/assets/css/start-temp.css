@@ -57,6 +57,7 @@
 
 @media (orientation: portrait) {
 	.mobile .start-temp .content{flex-direction: column;}
+	.mobile .start-temp .main-title {margin-right: 30px;}
 }
 
 @media (orientation: landscape) {

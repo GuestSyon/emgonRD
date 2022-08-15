@@ -6,14 +6,14 @@ export default class SideComponent extends React.Component {
 	constructor(props) {
 		super(props);
 		const {pageKey, lan, rear, brake, strap, frontArr, selType, logoCustom, powerArr, simRearArr, rearInfo, brakeInfo, strapInfo, batteryInfo, logoInfo, selBattery, labelOther} = props, openTab = {color:true, front:true, option:true, rear:true, brake:true, strap:true, logo:true, power:true, battery:true, simRear:true, headlight:true};
-		this.state = {pageKey, lan, selFront:{}, selCol:{}, selOption:{}, rear, brake, strap, frontArr, selType, selSubPart:{}, sizeArr:[], colArr:[], contArr:[], optionArr:[], selectArr:[], catArr:[], powerArr, simRearArr, headlightArr:[], rearInfo, brakeInfo, strapInfo, batteryInfo, selBattery, labelOther, logoInfo, openTab, priceTotal:0, logoCustom};
+		this.state = {pageKey, lan, selFront:{}, selCol:{}, selOption:{}, rear, brake, strap, frontArr, selType, selSubPart:{}, sizeArr:[], colArr:[], contArr:[], optionArr:[], selectArr:[], catArr:[], protoArr:[], powerArr, simRearArr, headlightArr:[], rearInfo, brakeInfo, strapInfo, batteryInfo, selBattery, labelOther, logoInfo, openTab, priceTotal:0, logoCustom};
 	}
 
 	componentDidMount() {
 	}
 
 	componentWillReceiveProps(nextProps) {
-		['lan', 'pageKey', 'rear', 'brake', 'strap', 'frontArr', 'colArr', 'sizeArr', 'contArr', 'powerArr', 'simRearArr', 'headlightArr', 'selPower', 'rearInfo', 'brakeInfo', 'strapInfo', 'batteryInfo', 'selBattery', 'logoInfo', 'selectArr', 'catArr', 'logoImg', 'logoCustom', 'logoControl', 'proto', 'labelOther', 'selSimRear', 'selHeadlight', 'strap'].forEach(key => { 
+		['lan', 'pageKey', 'rear', 'brake', 'strap', 'frontArr', 'colArr', 'sizeArr', 'contArr', 'powerArr', 'simRearArr', 'headlightArr', 'selPower', 'rearInfo', 'brakeInfo', 'strapInfo', 'batteryInfo', 'selBattery', 'logoInfo', 'selectArr', 'catArr', 'logoImg', 'logoCustom', 'logoControl', 'proto', 'protoArr', 'labelOther', 'selSimRear', 'selHeadlight', 'strap'].forEach(key => { 
 			if (this.state[key] !== nextProps[key]) {
 				this.setState({[key]:nextProps[key]}, () => {
 					this.setTotalPrice();
@@ -48,9 +48,24 @@ export default class SideComponent extends React.Component {
 	}
 
 	setTotalPrice = () => {
-		const {selSubPart, selCol, selFront, selOption, rearInfo, brakeInfo, logoInfo, rear, brake, rearHide, brakeHide, logoImg} = this.state;
+		const {selSubPart, selCol, selFront, selOption, rearInfo, brakeInfo, logoInfo, rear, brake, rearHide, brakeHide, logoImg, proto, protoArr, selHeadlight, headlightArr, simRearArr, selSimRear, strapInfo, strap} = this.state;
 		var priceTotal = 0;
-		if (selSubPart) priceTotal += parseFloat(selSubPart.price);
+		if (proto) {
+			const selProto = protoArr.find(item=>item.key===proto); priceTotal += parseFloat(selProto.price);
+			if (proto==='simplex') {
+				if (selHeadlight) {
+					const headlightItem = headlightArr.find(item=>item.key===selHeadlight);
+					priceTotal += parseFloat(headlightItem.price);
+				}
+				if (selSimRear) {
+					const simRearItem = simRearArr.find(item=>item.key===selSimRear);
+					priceTotal += parseFloat(simRearItem.price);
+				}
+				if (strap) {
+					priceTotal += parseFloat(strapInfo.price);
+				}
+			}
+		} else if (selSubPart) priceTotal += parseFloat(selSubPart.price);
 		if (selCol)		priceTotal += parseFloat(selCol.price, 10);
 		if (selFront)	priceTotal += parseFloat(selFront.price, 10);
 		if (selOption && selOption.price) priceTotal += parseFloat(selOption.price, 10);

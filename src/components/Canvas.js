@@ -36,7 +36,6 @@ export default class CanvasComponent extends React.Component {
 		this.loadPlane();
 		this.loadPanoBack();
 		this.loadModel();
-		this.animate();
 	}
 
 	componentWillReceiveProps(nextProps) {
@@ -62,7 +61,7 @@ export default class CanvasComponent extends React.Component {
 					else if (key==='selHeadlight') {
 						if (!this.headlight1 || !this.headlight2) return;
 						this.setHeadlightVisible();
-						this.headlight1.visible = selHeadlight==='headlight1' || selHeadlight==='headlight2';
+						this.headlight1.visible = selHeadlight==='headlight1';
 						this.headlight2.visible = selHeadlight==='headlight2';
 					} else if (key === 'selPower') {
 						if (this.showPowerObj && this.showPowerObj.powerKey!==selPower) this.hidePower(this.showPowerObj.powerKey);
@@ -177,7 +176,6 @@ export default class CanvasComponent extends React.Component {
 		});
 		this.boxArr.forEach(child => {
 			if (child.name.includes('side')) child.scale.x = selBottom==='LWB'?0.01: disM/disL * 0.0102;
-			// if (child.name.includes('top')) child.scale.z = topLevel?0.01: (langEasyH - boxBottomH)/langSpaceH * 0.0101;
 		});
 		this.framePickUp.scale.x = selBottom==='MWB'?0.01: disL/disM * 0.01;
 		this.modelObj.position.x = modelH/-2.5 * pushR;
@@ -236,6 +234,7 @@ export default class CanvasComponent extends React.Component {
 		this.shadowLight.shadow.camera.far = 500;
 		this.backLight = new THREE.DirectionalLight(0xFFFFFF, 0.5 ); this.backLight.position.set(5, 4, -5); this.scene.add( this.backLight );
 		this.frontLight = new THREE.DirectionalLight(0xFFFFFF, 0.4 ); this.frontLight.position.set(-5, -1, 0); this.scene.add( this.frontLight );
+		this.renderer.setAnimationLoop( this.animate );
 		document.getElementById('container').addEventListener('pointerdown', e=> {this.mouseStatus='down'; this.onMouseDown(e);});
 		document.getElementById('container').addEventListener('pointermove', e=> {this.mouseStatus='move'; this.onMouseMove(e);});
 		document.getElementById('container').addEventListener('pointerup', this.onClickCanvas);
@@ -328,13 +327,11 @@ export default class CanvasComponent extends React.Component {
 	loadModel = () => {
 		const modelArr = [{file:modelPowerPillar, key:'pillar'}, {file:modelPowerWall, key:'wall'}]; // {file:modelCar, key:'car'}, 
 		const mapPowerBloom = new THREE.TextureLoader().load(imgPowerBloom);
+		const colInfo = {blue:0x6CEAFE, black:0x000001, grey:0x222222, white:0xBBBBBB}; // , text:0x6CEAFE
 		modelArr.forEach(modelItem => {
 			new FBXLoader().load( modelItem.file, (object) => {
 				object.children.forEach(child => {
-					if 		(child.name==='blue') child.material.color.setHex(0x6CEAFE);
-					else if (child.name==='black') child.material.color.setHex(0x000000);
-					else if (child.name==='grey') child.material.color.setHex(0x222222);
-					else if (child.name==='white') child.material.color.setHex(0xBBBBBB);
+					if (colInfo[child.name]) child.material.color.setHex(colInfo[child.name]);
 					else if (child.name==='bloom') child.material = new THREE.MeshBasicMaterial({transparent:true, map:mapPowerBloom});
 					else if (child.name==='text') child.material = new THREE.MeshBasicMaterial({color:0x6CEAFE});
 					child.castShadow = true;
@@ -437,9 +434,8 @@ export default class CanvasComponent extends React.Component {
 		if (this.planeMesh.position.x >= 4) this.planeMesh.position.x = 0;
 	}
 
-	animate=()=>{
+	animate=(time)=>{
 		if (!this.camera || !this.scene) return;
-		requestAnimationFrame(this.animate);
 		this.rotateWheel();
 		this.rendering();
 		if (this.showPowerTime > 0) {

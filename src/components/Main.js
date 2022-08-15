@@ -27,7 +27,7 @@ function getWSize(w, h, dir) {
 	var width, height, scale='normal';
 	if (device) {
 		if (dir==='land') {
-			width = w * 0.6; height = h;
+			width = device==='iPad'?w - 400: w * 0.6; height = h;
 		} else {
 			width = h; height = w*0.6;
 		}
@@ -246,6 +246,7 @@ export default class MainComponent extends React.Component {
 					lan={lan}
 					selectArr={selectArr}
 					catArr={catArr}
+					protoArr={protoArr}
 					rear={rear}
 					brake={brake}
 					strap={strap}
