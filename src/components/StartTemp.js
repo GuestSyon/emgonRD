@@ -5,8 +5,8 @@ import { getTouchPos, GetLangLabel, serverUrl } from '../data/info';
 export default class StartTempComponent extends React.Component {
 	constructor(props) {
 		super(props);
-		const {pageKey, tSize, lan, labelOther, protoArr} = props;
-		this.state = {pageKey, tSize, lan, labelOther, selIdx:0, selectArr:[], customArr:[], protoArr, numCustom:0, numPremade:0, numProto:0, disBackCustom:true, disNextCustom:false, disBackPremade:true, disNextPremade:false, disBackProto:true, disNextProto:false};
+		const {pageKey, tSize, wSize, lan, labelOther, protoArr} = props;
+		this.state = {pageKey, tSize, wSize, lan, labelOther, selIdx:0, selectArr:[], customArr:[], protoArr, numCustom:0, numPremade:0, numProto:0, disBackCustom:true, disNextCustom:false, disBackPremade:true, disNextPremade:false, disBackProto:true, disNextProto:false};
 	}
 
 	componentDidMount() {
@@ -15,7 +15,7 @@ export default class StartTempComponent extends React.Component {
 	}
 
 	componentWillReceiveProps(nextProps) {
-		['pageKey', 'selectArr', 'customArr', 'protoArr', 'tSize', 'lan', 'labelOther'].forEach(key => {
+		['pageKey', 'selectArr', 'customArr', 'protoArr', 'tSize', 'wSize', 'lan', 'labelOther'].forEach(key => {
 			if (this.state[key] !== nextProps[key]) {
 				this.setState({[key]:nextProps[key]});
 			}
@@ -67,17 +67,18 @@ export default class StartTempComponent extends React.Component {
 	}
 
 	render() {
-		const {pageKey, lan, selectArr, customArr, protoArr, disBackCustom, disNextCustom, disBackPremade, disNextPremade, disBackProto, disNextProto, tSize, labelOther} = this.state;
+		const {pageKey, lan, selectArr, customArr, protoArr, disBackCustom, disNextCustom, disBackPremade, disNextPremade, disBackProto, disNextProto, tSize, wSize, labelOther} = this.state;
 		var wImgCustom = 120, wImgPremade = 230, leftC = 0, arrowT = 0;
-		if (tSize.scale==='small') {wImgCustom = 90; wImgPremade = 210;}
+		if (wSize.scale==='small') {wImgCustom = 90; wImgPremade = 210;}
 		const {device} = this.props, wPart = device === 'iPad'?302:210, deltaLeft = device==='iPad'?162:115;
 		if (device) {
 			if (window.innerWidth < window.innerHeight) {
-				const hPart = (tSize.w-50)/3 -36;
+				const hPart = (tSize.h-50)/3 -36;
 				wImgCustom = (hPart - 70)/3.35;
 				wImgPremade = (hPart - 70) * 1.5;
-				leftC = tSize.h/2- deltaLeft;// 138;
+				leftC = tSize.w/2- deltaLeft;// 138;
 				arrowT = hPart/2-20;
+				// console.log(wImgCustom, wImgPremade, leftC, arrowT)
 			} else {
 				const hPart = (tSize.h-50) -36, hImgPremade = device==='iPad'?320: Math.min(hPart - 70, 192);
 				wImgCustom = device==='iPad'?100:(hPart - 70)/3.35;

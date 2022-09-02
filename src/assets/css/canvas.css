@@ -8,8 +8,9 @@
 .set-item.set-back {top: 50px;}
 .set-item.set-light {bottom: 250px;}
 .set-item.set-rotate {bottom: 150px;}
-.set-item.set-rotate.disable {opacity: 0.5; cursor: default;}
 .set-item.set-sun {bottom: 50px;}
+.set-item.disable {opacity: 0.5; cursor: default;}
+.set-item.disable:hover {box-shadow: none;}
 
 .setting-pano {position: absolute; z-index: 1; left: 120px; top: 20px; display: flex; align-items: center; display: none;}
 .setting-pano .pano-item {margin: 8px; width: 80px; height: 40px; cursor: pointer; background-size: contain; text-shadow: 1px 1px white; font-size: 32px; color: blue; font-weight: 700; border: 2px solid black; transition: all 0.3s; opacity: 0.8;}
@@ -20,8 +21,8 @@
 .set-item.set-rotate .circle img {border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.8) ; padding: 4px;}
 .set-item.set-rotate.rotate .circle {animation-name: wheelRotate; animation-duration: 5s; animation-iteration-count: infinite; animation-timing-function: linear;}
 @keyframes wheelRotate {
-	0%  {transform: rotate(360deg);}
-	100% {transform: rotate(0deg);}
+	0%  {transform: rotate(0deg);}
+	100% {transform: rotate(360deg);}
 }
 
 .logo-wrapper {position: absolute; width: 0; height: 0;}

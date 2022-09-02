@@ -13,6 +13,7 @@ import '../assets/css/index.css';
 
 const testMode = false, logoTest = false;
 const defaultLogoCustom = {w:5, h:3, t:1.2, l:1.7, r:0}
+const {availWidth, availHeight} = window.screen, screenWidth = Math.max(availWidth, availHeight), screenHeight = Math.min(availWidth, availHeight);
 const device = getDevice();
 function getDevice() {
 	const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -43,42 +44,64 @@ export default class MainComponent extends React.Component {
 		super(props);
 		const {innerWidth, innerHeight} = window, dir = innerWidth>innerHeight?'land':'port';
 		const w = Math.max(innerWidth, innerHeight), h = Math.min(innerWidth, innerHeight), wSize = getWSize(w, h, dir);
-		this.state = {loading:true, loadPro:0, pageKey:'start', wSize, rear:false, brake:false, strap:false, frontArr:[], colArr:[], customArr:[], sizeArr:[], contArr:[], powerArr:[], simRearArr:[], headlightArr:[], rearInfo:{}, brakeInfo:{}, strapInfo:{}, batteryInfo:{}, logoInfo:{}, selBattery:{}, catArr:[], selectArr:[], protoArr:[], logoCustom:defaultLogoCustom, tSize:{w, h, scale:wSize.scale}, dir, lan:'en', labelOther:{}};
+		this.state = {loading:true, loadPro:0, pageKey:'start', wSize, rear:false, brake:false, strap:false, frontArr:[], colArr:[], customArr:[], sizeArr:[], contArr:[], powerArr:[], simRearArr:[], headlightArr:[], rearInfo:{}, brakeInfo:{}, strapInfo:{}, batteryInfo:{}, logoInfo:{}, selBattery:{}, catArr:[], selectArr:[], protoArr:[], logoCustom:defaultLogoCustom, tSize:{w:innerWidth, h:innerHeight, l:0}, dir, lan:'en', labelOther:{}};
 	}
 
 	componentDidMount() {
 		this.getSelectData();
 		this.setState({pageKey:'start', rear:true, brake:true});
 		// if (testMode) setTimeout(() => { this.setState({pageKey:'purpose', selType:'custom'}) }, 0);
+		this.setCanvasSize();
 		window.addEventListener('resize', this.setCanvasSize);
+		window.addEventListener('orientationchange', ()=> {
+			for (let i = 0; i < 7; i++) {
+				setTimeout(() => { this.setCanvasSize(); }, 200 * i);
+			}
+		});
 		const ipUrl = "https://api.ipdata.co?api-key=c2eb47c52f4740843c95757d4b532b4c2cba5ad4185895769cf9edb8"; // 37.201.226.249
 		jQuery.ajax({ url: ipUrl, type: 'GET',
 			success: (data) => {
 				const lan = data.country_name === "Germany"?'de':'en';
-				// const lan = (json && json.country && json.country.toLowerCase().includes('german'))?'de':'en';
 				this.setState({lan})
 			}, error: function(err) { window.alert("Failed to get IP location to choose language"); }
 		});
 	}
 
 	getSelectData = () => {
-		if (window.location.protocol==='http:' && device && testMode) {
-			const catArr = [ {id: "1", name: "color", label: "COLOR"}, {id: "2", name: "front", label: "WINDSHIELD"}, {id: "4", name: "option", label: "YOUR OPTION"}, {id: "5", name: "rear", label: "REAR PANEL"}, {id: "6", name: "brake", label: "BRAKE LIGHT"}, {id: "7", name: "logo", label: "Add Logo"} ];
-			const selectArr = [
-				{id: "1", img: "easyOne_premade", key: "easyOne", label: "EASY ONE", name: "easyOne", price: "2998.99", description: "The ultimate vehicle for the smart metropolitan. Our Lightweight eco-friendly affordable 1-Seater."},
-				{id: "2", img: "easyTwo_premade", key: "easyTwo", label: "EASY TWO", name: "easyTwo", price: "3400", description: "More room, more customizability - still compact. Want a second passenger, Kids-Box or Pick-Up? This is your choice."},
-				{id: "4", img: "carGolion_premade", key: "carGolion", label: "CARGOLINO", name: "carGolion", price: "4000", description: "Want to sell Coffee or deliver products? The Cargolino - Your modern way of operating a mobile eco-friendly pop-up Store."},
-				{id: "5", img: "space_premade", key: "space", label: "SPACE", name: "space", price: "4500", description: "A modern 21st century solution for the last-mile. Quick & easy delivery vehicle."},
-				{id: "6", img: "spaceXl_premade", key: "spaceXl", label: "SPACE XL", name: "spaceXl", price: "5000", description: "Our cargo-monster. A LOT of room, but since it's Emogon: it's still compact. Small footprint, big cargo!"}
+		if (testMode) { // window.location.protocol==='http:' && device && 
+			const catArr = [
+				{id: "1", name: "color", label: "COLOR", label_de: "FARBE"},
+				{id: "2", name: "front", label: "WINDSHIELD", label_de: "WINDSCHUTZSCHEIBE"},
+				{id: "4", name: "option", label: "YOUR OPTION", label_de: "DEINE OPTION"},
+				{id: "5", name: "rear", label: "REAR PANEL", label_de: "REAR PANEL"},
+				{id: "6", name: "brake", label: "BRAKE LIGHT", label_de: "BREMSLICHT"},
+				{id: "7", name: "logo", label: "Add Logo", label_de: "MEIN LOGO"},
+				{id: "8", name: "power", key: "power", label: "POWER", label_de: "ENERGIE"},
+				{id: "9", name: "battery", key: "battery", label: "BATTERY PACKS", label_de: "AKKUPACKS"},
+				{id: "10", name: "headlight", key: "headlight", label: "Headlights", label_de: "Scheinwerfer"},
+				{id: "11", name: "strap", key: "strap", label: "Bonnet Strap", label_de: "Bonnet Strap"}
 			];
-			const customArr = [{id:1, name:'swb', label:'SWB', img:'swb_custom', price:100}, {id:2, name:'mwb', label:'MWB', img:'mwb_custom', price:200}, {id:3, name:'lwb', label:'LWB', img:'lwb_custom', price:300}]
-			const labelOther={}, labelArr = [{id: "1", name: "simplex", key: "simplex", label: "Simplex", label_de: "Simplex"},
+			const selDes = 'First Edition';
+			const selectArr = [
+				{id: "1", img: "easyOne_premade", 	key: "easyOne", 	label: "EASY ONE", 	name: "easyOne", 	price: "2999", 	description: selDes, description_de:selDes, label_de:''},
+				{id: "2", img: "easyTwo_premade", 	key: "easyTwo", 	label: "EASY TWO", 	name: "easyTwo", 	price: "3400", 	description: selDes, description_de:selDes, label_de:''},
+				{id: "4", img: "carGolion_premade", key: "carGolion", 	label: "CARGOLINO", name: "carGolion", 	price: "4000", 	description: selDes, description_de:selDes, label_de:''},
+				{id: "5", img: "space_premade", 	key: "space", 		label: "SPACE", 	name: "space", 		price: "4500", 	description: selDes, description_de:selDes, label_de:''},
+				{id: "6", img: "spaceXl_premade", 	key: "spaceXl", 	label: "SPACE XL", 	name: "spaceXl", 	price: "5000", 	description: selDes, description_de:selDes, label_de:''}
+			];
+			const customArr = [
+				{id:1, name:'swb', label:'SWB', label_de:'SWB', img:'swb_custom', price:100, description:'Description of SWB model', description_de:'Beschreibung des SWB-Modells'},
+				{id:2, name:'mwb', label:'MWB', label_de:'MWB', img:'mwb_custom', price:200, description:'Description of MWB model', description_de:'Beschreibung des MWB-Modells'},
+				{id:3, name:'lwb', label:'LWB', label_de:'LWB', img:'lwb_custom', price:300, description:'Description of LWB model', description_de:'Beschreibung des LWB-Modells'}
+			];
+			const labelOther={}, labelArr = [
+				{id: "1", name: "simplex", key: "simplex", label: "Simplex", label_de: "Simplex"},
 				{id: "2", name: "specialVehicles", key: "specialVehicles", label: "Special Vehicles"},
 				{id: "3", name: "prototypes", key: "prototypes", label: "Prototypes", label_de: "Prototypen"},
-				{id: "4", name: "chooseModel", key: "chooseModel", label: "Choose your model"},
+				{id: "4", name: "chooseModel", key: "chooseModel", label: "Choose your model", label_de:'Wählen Sie Ihr Modell'},
 				{id: "5", name: "custom", key: "custom", label: "Custom", label_de: "Brauch"},
 				{id: "6", name: "premade", key: "premade", label: "Premade", label_de: "Vorgefertigt"},
-				{id: "7", name: "chooseRange", key: "chooseRange", label: "Choose your range"},
+				{id: "7", name: "chooseRange", key: "chooseRange", label: "Choose your range", label_de:'Wählen Sie Ihr Sortiment'},
 				{id: "8", name: "continue", key: "continue", label: "Continue", label_de: "Fortsetzen"},
 				{id: "9", name: "firstEdition", key: "firstEdition", label: "FIRST EDITION", label_de: "ERSTE AUSGABE"},
 				{id: "10", name: "space", key: "space", label: "Space", label_de: "Platz"},
@@ -87,12 +110,21 @@ export default class MainComponent extends React.Component {
 				{id: "13", name: "here", key: "here", label: "here", label_de: "hier"},
 				{id: "14", name: "tip", key: "tip", label: "Tip", label_de: "Tipp"},
 				{id: "15", name: "tooltipTip", key: "tooltipTip"},
-				{id: "16", name: "cart", key: "cart", label: "Add to Cart", label_de: "In den Warenkorb"}]
+				{id: "16", name: "cart", key: "cart", label: "Add to Cart", label_de: "In den Warenkorb"},
+				{id: "17", name: "proto", key: "proto", label: "Prototype", label_de: "Prototype"}
+			];
+			const protoArr = [
+				{ id: "1", img: "simplex_prototype", 	key: "simplex", 	label: "Simplex", 	label_de: "Simplex", 	name: "simplex", 	price: "250", description: "", description_de: ""},
+				{ id: "2", img: "canoo_lino_prototype", key: "canoo_lino", label: "Canoo Lino", label_de: "Canoo Lino", name: "canoo_lino", price: "250", description: "", description_de: ""},
+				{ id: "3", img: "canoo_space_prototype", key: "canoo_space", label: "Canoo Space", label_de: "Canoo Space", name: "canoo_space", price: "250", description: "", description_de: ""},
+				{ id: "4", img: "preme_space_prototype", key: "preme_space", label: "Preme Space", label_de: "Preme Space", name: "preme_space", price: "250", description: "", description_de: ""},
+			]
 			catArr.forEach(item => { item.key=item.name;});
 			customArr.forEach(item => { item.key=item.name;});
 			selectArr.forEach(item => { item.key=item.name;});
 			labelArr.forEach(item => { item.key===item.name; labelOther[item.key] = item; });
-			this.setState({selectArr, catArr, customArr, labelOther}); return;
+			this.setState({selectArr, catArr, customArr, labelOther, protoArr});
+			return;
 		}
 		jQuery.ajax({ type: "GET", url: apiUrl+'getModel.php', dataType: 'json',
 			success: (res) => {
@@ -105,7 +137,7 @@ export default class MainComponent extends React.Component {
 	}
 
 	getOptionData = () => {
-		if (window.location.protocol==='http:' && device && testMode) {
+		if (testMode) { // window.location.protocol==='http:' && device && 
 			const res = [
 				{id: "1", img: null, label: "Electric Blue", name: "blue", part: "color", piece: "4CBCDD", price: "100", description: "#52bede 20%, #77cce5 49.9%, #52bede 50%"},
 				{id: "2", img: "", label: "Blizzard White", name: "white", part: "color", piece: "F8F8F8", price: "250", description: "#eeeeee 20%, #F8F8F8 49.9%, #eeeeee 50%"},
@@ -127,8 +159,15 @@ export default class MainComponent extends React.Component {
 				{id: "18", img: "logo", label: "Logo", name: "logo", part: "logo", piece: null, price: "150", description: "Logo Description"},
 				{id: "19", img: "power_pillar", label: "Power Pillar", name: "pillar", part: "power", piece: null, price: "100", description: "Power Pillar Description"},
 				{id: "20", img: "power_wall", label: "Power Wall", name: "wall", part: "power", piece: null, price: "100", description: "Power Wall Description"},
-				{id: "21", img: "battery", label: "Battery", name: "battery", part: "battery", piece: null, price: "100", description: "Battery Wall Description"}
+				{id: "21", img: "battery", label: "Battery", name: "battery", part: "battery", piece: null, price: "100", description: "Battery Wall Description"},
+				{id: "22", img: "simRear_class", key: "class", label: "Classic Rear", label_de: "Klassisches Heck", name: "class", part: "simRear", piece: null, price: "100", description: "Description of classic rear option"},
+				{id: "23", img: "simRear_race", key: "race", label: "Race Rear", label_de: "Rennen hinten", name: "race", part: "simRear", piece: null, price: "200", description: "Description of race rear option"},
+				{id: "24", img: "headlight0", key: "headlight0", label: "Headlight 1", label_de: "Scheinwerfer 1", name: "headlight0", part: "headlight", piece: null, price: "100", description: "Description for Headlight 1"},
+				{id: "25", img: "headlight1", key: "headlight1", label: "Headlight 2", label_de: "Scheinwerfer 2", name: "headlight1", part: "headlight", piece: null, price: "200", description: "Description for Headlight 2"},
+				{id: "26", img: "headlight2", key: "headlight2", label: "Headlight 3", label_de: "Scheinwerfer 3", name: "headlight2", part: "headlight", piece: null, price: "300", description: "Description for Headlight 3"},
+				{description: null, id: "27", img: "strap", key: "strap", label: "Bonnet Strap", label_de: "Bonnet Strap", name: "strap", part: "strap", piece: null, price: "100"}
 			]
+			res.forEach(item => { item.label_de = item.label; item.description_de = item.description; });
 			this.setProcessResData(res);
 			return;
 		}
@@ -144,11 +183,11 @@ export default class MainComponent extends React.Component {
 	}
 
 	setProcessResData = (res) => {
-		var colArr = [], sizeArr = [], contArr = [], powerArr = [], simRearArr=[], headlightArr=[], rearInfo, brakeInfo, strapInfo, logoInfo, batteryInfo; //  = {part:'logo', name:'logo', label:'Logo', price:150, img:'logo' }
+		var colArr = [], sizeArr = [], contArr = [], powerArr = [], simRearArr=[], headlightArr=[], rearInfo, brakeInfo, strapInfo, logoInfo, batteryInfo;
 		res.forEach(item => {
 			if (item.part === 'color') {
 				item.str = '#'+item.piece;
-				item.hex = parseInt(item.str.replace(/^#/, ''), 16);
+				item.hex = parseInt(item.piece, 16);
 				// item.hex = hex.toString(16)
 				colArr.push(item);
 			} else if (item.part === 'windshield') {
@@ -177,18 +216,25 @@ export default class MainComponent extends React.Component {
 	}
 
 	setCanvasSize = () => {
+		// const {innerWidth, innerHeight} = window, dir = innerWidth>innerHeight?'land':'port';
+		// const w = Math.max(innerWidth, innerHeight), h = Math.min(innerWidth, innerHeight), wSize = getWSize(w, h, dir);
+		// this.setState({tSize:{w, h, scale:wSize.scale, l:0}, wSize, dir});
 		const {innerWidth, innerHeight} = window, dir = innerWidth>innerHeight?'land':'port';
-		const w = Math.max(innerWidth, innerHeight), h = Math.min(innerWidth, innerHeight), wSize = getWSize(w, h, dir);
-		this.setState({tSize:{w, h, scale:wSize.scale}, wSize, dir});
+		const pageWidth = dir==='land'?screenWidth:screenHeight, pageHeight = dir==='port'?screenWidth:screenHeight;
+		const w = device==='ios'?pageWidth:innerWidth, h=innerHeight;
+		const wSize = getWSize(Math.max(w, h), Math.min(w, h), dir);
+		console.log(wSize);
+		this.setState({dir, tSize:{w, h, l:(innerWidth-w)/2}, wSize});
 	}
 
 	render() {
 		const {pageKey, lan, loading, selType, wSize, rear, brake, strap, selCol, selSubPart, frontArr, selFront, selOption, selPower, colArr, sizeArr, contArr, powerArr, simRearArr, headlightArr, rearInfo, brakeInfo, strapInfo, batteryInfo, logoInfo, catArr, selectArr, customArr, protoArr, logoImg, logoCustom, loadPro, loadingLogo, tSize, dir, logoControl, selBattery, proto, labelOther, selSimRear, selHeadlight} = this.state;
 		return (
-			<div className={`page-wrapper ${device?'mobile':'web'} ${device} ${pageKey}-page ${wSize.scale}-scale`} id='pageWrapper' style={{width:dir==='land'?tSize.w:tSize.h+'px', height:dir==='land'?tSize.h:tSize.w+'px'}}>
+			<div className={`page-wrapper ${device?'mobile':'web'} ${device} ${pageKey}-page ${wSize.scale}-scale`} id='pageWrapper' style={{width:tSize.w, height:tSize.h, left:tSize.l}}>
 				<StartTempComponent
 					lan={lan}
 					tSize={tSize}
+					wSize={wSize}
 					device={device}
 					pageKey={pageKey}
 					customArr={customArr}
@@ -241,7 +287,7 @@ export default class MainComponent extends React.Component {
 					setLogoCustom={(logoCustom)=>this.setState({logoCustom})}
 				></CanvasComponent>
 				<SideComponent
-					// device={device}
+					device={device}
 					pageKey={pageKey}
 					lan={lan}
 					selectArr={selectArr}
@@ -304,7 +350,6 @@ export default class MainComponent extends React.Component {
 				></SideComponent>
 				{selSubPart &&
 					<div className='set-item set-back' onClick={()=>{
-							// this.setState({selSubPart:null});
 							if (pageKey==='canvas') this.setState({pageKey:'map'});
 							else if (pageKey==='map') this.setState({pageKey:'start', selSubPart:null});
 						} }>

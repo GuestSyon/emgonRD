@@ -8,7 +8,7 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
 import modelCar from '../assets/model/test.fbx'; // _proto fbx glb
 import modelPowerPillar from '../assets/model/power_pillar.fbx';
 import modelPowerWall from '../assets/model/power_wall.fbx';
-import { CustomModel, SetLogoCustom, SetLogoImg, SetColor, GetClickObj, GetArrowPos, GetNextLogoValue, GetNextArrowPos, modelH, panoMat } from '../data/info';
+import { CustomModel, SetLogoCustom, SetLogoImg, SetColor, GetClickObj, GetArrowPos, GetNextLogoValue, GetNextArrowPos, modelH, transTime, GetPanoMesh, SetTween, SetColTween } from '../data/info';
 
 import imgIconRotate from '../assets/images/icon_rotate_black.png';
 import imgIconMoon from '../assets/images/icon_moon_black.png';
@@ -19,8 +19,8 @@ import imgPowerBloom from '../assets/images/bloom_power.png';
 
 import imgFloor from '../assets/images/floor.jpg';
 
-const gltf = false, disM = 2.12 - 1.41, disL = 2.42 - 1.41, bottomY=0.231, langEasyY = 1.583, langSpaceY = 2.033, langEasyH = langEasyY - bottomY, langSpaceH = langSpaceY - bottomY, boxBottomH = 0.3;
-const rWheel = -0.02, rUnit = Math.PI*2/3, powerTime = 20, simBackDis = {x:0.93, z:-0.1};
+const disM = 2.12 - 1.41, disL = 2.42 - 1.41, bottomY=0.231, langEasyY = 1.583, langSpaceY = 2.033, langEasyH = langEasyY - bottomY, langSpaceH = langSpaceY - bottomY, boxBottomH = 0.3;
+const gltf = false, rWheel = -0.02, rUnit = Math.PI*2/3, powerTime = 20, simBackDis = {x:0.93, z:-0.1};
 
 export default class CanvasComponent extends React.Component {
 	constructor(props) {
@@ -50,9 +50,10 @@ export default class CanvasComponent extends React.Component {
 						this.rearArr.forEach(child => { child.visible = rear;});
 						this.backBrake.visible = rear;
 						this.setCeiling();
+						this.setPickFrame();
 					} else if (key === 'brake' && this.brakeGroup) this.brakeGroup.visible = brake;
 					else if (key === 'strap' && this.proSimStrap) this.proSimStrap.visible = strap;
-					else if (key === 'selFront') { this.setFront(); }
+					else if (key === 'selFront') { this.setFront(); this.setPickFrame(); }
 					else if (key === 'selOption') { this.setOption(); this.setCeiling(); }
 					else if (key === 'logoImg') { SetLogoImg(logoImg, this.logoMesh); }
 					else if (key === 'logoCustom') { SetLogoCustom(logoCustom, this.logoMesh, this.logoArrowArr); }
@@ -98,6 +99,18 @@ export default class CanvasComponent extends React.Component {
 		this.camera.updateProjectionMatrix();
 	}
 
+	setPickFrame = () => {
+		const {selOption, rear, selFront, selSubPart} = this.state;
+		this.framePickUp.visible = false;
+		if (rear) {
+			this.framePickUp.visible = selSubPart !== 'easyOne'; // true;
+			this.framePickUp.scale.z = selFront==='xl'?0.0252:0.0188;
+		} else {
+			this.framePickUp.visible = selOption==='pickUp';
+			this.framePickUp.scale.z = 0.01;
+		}
+	}
+
 	setFront = () => {
 		const {selFront, proto} = this.state, topLevel = selFront === 'xl'?true:false, protoStr=proto?'simplex':'';
 		this.frontArr.forEach(child => { child.visible = child.name.includes('frontMain_'+selFront+protoStr) });
@@ -136,7 +149,7 @@ export default class CanvasComponent extends React.Component {
 		this.eppBox.visible = selOption==='eppBox';
 		this.passenger.visible = selOption==='passenger';
 		this.backBrake.visible = (selOption==='cargo' || selOption==='pickUp');
-		this.framePickUp.visible = selOption==='pickUp';
+		this.setPickFrame();
 	}
 
 	setCeiling = (info) => {
@@ -159,11 +172,11 @@ export default class CanvasComponent extends React.Component {
 		if (!selSubPart) return;
 		var selBottom = '', dis = 0, pushR = 1;
 		switch (selSubPart) {
-			case 'easyOne': 	selBottom = 'SWB'; dis = 0;   	pushR = 1; break;
-			case 'easyTwo': 	selBottom = 'MWB'; dis = disM;	pushR = 1.2; break;
-			case 'carGolion': 	selBottom = 'MWB'; dis = disM;	pushR = 1.2; break;
-			case 'space': 		selBottom = 'MWB'; dis = disM;	pushR = 1.2; break;
-			case 'spaceXl': 	selBottom = 'LWB'; dis = disL;	pushR = 1.4; break;
+			case 'easyOne': selBottom = 'SWB'; dis = 0;   	pushR = 1; break;
+			case 'easyTwo': selBottom = 'MWB'; dis = disM;	pushR = 1.2; break;
+			case 'carGolion':selBottom = 'MWB'; dis = disM;	pushR = 1.2; break;
+			case 'space': 	selBottom = 'MWB'; dis = disM;	pushR = 1.2; break;
+			case 'spaceXl': selBottom = 'LWB'; dis = disL;	pushR = 1.4; break;
 			default: break;
 		}
 		this.bottomArr.forEach(child => { child.visible = child.name.includes(selBottom); });
@@ -182,23 +195,28 @@ export default class CanvasComponent extends React.Component {
 	}
 
 	setEnvMode = (envMode) => {
+		if (this.transEnvMode) return;
+		this.transEnvMode = true;
 		this.setState({envMode}, () => {
-			const {envMode} = this.state, darkLight = 0.2;
-			this.panoMesh.position.y = envMode==='sun'?1.2:1;
-			this.panoMesh.material.map = panoMat[envMode].back;
-			this.panoMesh.material.needsUpdate = true;
-			this.roundMesh.material = panoMat[envMode].round;
-			this.bottomMesh.material = panoMat[envMode].bottom;
-			this.setPanoDeg(envMode==='sun'?180:99);
-			this.panoMesh.rotation.z = envMode==='sun'?-0.03:0;
-			this.ambientLight.intensity = envMode==='sun'? 0.3 : darkLight;
-			this.shadowLight.intensity = envMode==='sun'? 0.8 : darkLight;
-			this.frontLight.intensity = envMode==='sun'? 0.4 : darkLight;
-			this.backLight.intensity = envMode==='sun'? 0.4 : darkLight;
+			const {envMode} = this.state, darkLight = 0.2, colBack = envMode==='sun'?1:0.27;
+			// ChangePanoMesh(this.panoSun, this.panoMoon, envMode);
+			this.panoMoon.material.transparent = true; this.panoMoon.material.opacity = envMode==='sun'?1:0;
+			this.panoMoon.visible = true;
+			SetTween(this.panoMoon.material, "opacity", envMode==='sun'? 0 : 1, transTime);
+			setTimeout(() => {
+				this.panoMoon.visible = envMode==='moon';
+				this.panoMoon.material.transparent = false;
+				this.transEnvMode = false;
+			}, transTime+100);
+			[{light:this.ambientLight, int:0.3}, {light:this.shadowLight, int:0.8}, {light:this.frontLight, int:0.4}, {light:this.backLight, int:0.4}].forEach(item => {
+				SetTween(item.light, "intensity", envMode==='sun'? item.int : darkLight, transTime);
+			});
+			SetColTween(this.roundMesh.material, {r:colBack, g:colBack, b:colBack}, transTime);
+			SetColTween(this.bottomMesh.material, {r:colBack, g:colBack, b:colBack}, transTime);
+			SetColTween(this.scene.fog, {r:colBack, g:colBack, b:colBack}, transTime);
+
 			this.shadowLight.castShadow = envMode==='sun';
 			this.renderer.setClearColor(envMode==='sun'?0xFFFFFF:0x333333, 1);
-			this.scene.fog.color.setHex(envMode==='sun'?0xFFFFFF:0x333333);
-			this.scene.fog.near = envMode==='sun'?14:14;
 		})
 	}
 
@@ -232,7 +250,7 @@ export default class CanvasComponent extends React.Component {
 		this.shadowLight.shadow.mapSize.height = 512;
 		this.shadowLight.shadow.camera.near = 0.5;
 		this.shadowLight.shadow.camera.far = 500;
-		this.backLight = new THREE.DirectionalLight(0xFFFFFF, 0.5 ); this.backLight.position.set(5, 4, -5); this.scene.add( this.backLight );
+		this.backLight = new THREE.DirectionalLight(0xFFFFFF, 0.4 ); this.backLight.position.set(5, 4, -5); this.scene.add( this.backLight );
 		this.frontLight = new THREE.DirectionalLight(0xFFFFFF, 0.4 ); this.frontLight.position.set(-5, -1, 0); this.scene.add( this.frontLight );
 		this.renderer.setAnimationLoop( this.animate );
 		document.getElementById('container').addEventListener('pointerdown', e=> {this.mouseStatus='down'; this.onMouseDown(e);});
@@ -258,7 +276,6 @@ export default class CanvasComponent extends React.Component {
 			document.getElementById('container').style.cursor = intName?'pointer':'default';
 		} else if (this.logoStatus === 'arrowDown') {
 			const interBack  = GetClickObj(e, this.sideMeshArr, this.camera, this.state.wSize, this.mouse, this.raycaster);
-			// const selArrow = this.logoArrowArr.find(arrow=>{return arrow.name===this.selArrowName});
 			if (!interBack) return;
 			const {point} = interBack, dX = (point.x - this.backSPos.x)/this.modelObj.scale.x, dY = (point.y - this.backSPos.y)/this.modelObj.scale.x;
 			const nextPosX = this.selarrowSPos.x + dX, nextPosY = this.selarrowSPos.y + dY;
@@ -275,14 +292,14 @@ export default class CanvasComponent extends React.Component {
 			this.controls.enabled = true;
 		}
 		if (!this.props.device && this.mouseStatus==='move') return; else this.mouseStatus = 'up';
-		const interObj = GetClickObj(e, [this.logoMesh, this.panoMesh], this.camera, this.state.wSize, this.mouse, this.raycaster);
+		const interObj = GetClickObj(e, [this.logoMesh, this.panoSun], this.camera, this.state.wSize, this.mouse, this.raycaster);
 		if (!this.logoStatus) {
 			if (interObj.object.name==='logo_plane') {
 				this.logoStatus = 'select';
 				this.logoArrowArr.forEach(arrow => { arrow.visible = true; });
 			}
 		} else if (this.logoStatus==='select') {
-			if (interObj.object.name==='pano_back') {
+			if (interObj.object.name.includes('pano_')) {
 				this.logoStatus = null;
 				this.logoArrowArr.forEach(arrow => { arrow.visible = false; });
 			}
@@ -302,30 +319,16 @@ export default class CanvasComponent extends React.Component {
 		this.totalGroup.add(this.planeMesh);
 	}
 
-	getPanoMesh = (geo, transparent) => {
-		const mat = new THREE.MeshBasicMaterial({transparent, side:2});
-		const panoMesh = new THREE.Mesh(geo, mat);
-		this.totalGroup.add(panoMesh); return panoMesh;
-	}
-
 	loadPanoBack = () => {
-		const panoR = 15, panoInR = panoR * 0.9, roundH = 3;
-		const panoGeo = new THREE.SphereGeometry(panoR, 64, 64);
-		this.panoMesh = this.getPanoMesh(panoGeo, true);
-		this.panoMesh.name = 'pano_back';
-
-		const roundGeo = new THREE.CylinderGeometry(panoInR, panoInR, roundH, 64, 1, true);
-		this.roundMesh = this.getPanoMesh(roundGeo, true);
-		this.roundMesh.position.y = roundH/2;
-
-		const bottomGeo = new THREE.PlaneGeometry(panoInR * 2+0.1, panoInR * 2+0.1);
-		this.bottomMesh = this.getPanoMesh(bottomGeo, true);
-		this.bottomMesh.position.y = 0.05; this.bottomMesh.rotation.x = Math.PI/-2;
+		this.panoSun = GetPanoMesh('pano_sun'); this.totalGroup.add(this.panoSun);
+		this.panoMoon = GetPanoMesh('pano_moon'); this.totalGroup.add(this.panoMoon);
+		this.roundMesh = GetPanoMesh('pano_round'); this.totalGroup.add(this.roundMesh);
+		this.bottomMesh = GetPanoMesh('pano_bottom'); this.totalGroup.add(this.bottomMesh);
 		this.setEnvMode('sun');
 	}
 
 	loadModel = () => {
-		const modelArr = [{file:modelPowerPillar, key:'pillar'}, {file:modelPowerWall, key:'wall'}]; // {file:modelCar, key:'car'}, 
+		const modelArr = [{file:modelPowerPillar, key:'pillar'}, {file:modelPowerWall, key:'wall'}];
 		const mapPowerBloom = new THREE.TextureLoader().load(imgPowerBloom);
 		const colInfo = {blue:0x6CEAFE, black:0x000001, grey:0x222222, white:0xBBBBBB}; // , text:0x6CEAFE
 		modelArr.forEach(modelItem => {
@@ -354,9 +357,7 @@ export default class CanvasComponent extends React.Component {
 			SetLogoCustom(this.state.logoCustom, this.logoMesh, this.logoArrowArr);
 			this.props.callGetData();
 		}, (xhr) => { const loadPro = Math.floor(xhr.loaded/xhr.total * 100); this.props.setLoading(true, loadPro); }, () => {  })
-		// for (let i = 0; i <= 20; i++) {
-		// 	setTimeout(() => { this.props.setLoading(true, i*5); }, i * 100);
-		// }
+		// for (let i = 0; i <= 20; i++) {setTimeout(() => { this.props.setLoading(true, i*5); }, i * 100);}
 		// setTimeout(() => { this.props.callGetData(); }, 22 * 300);
 	}
 
@@ -463,16 +464,10 @@ export default class CanvasComponent extends React.Component {
 		this.camera.updateProjectionMatrix();
 	}
 
-	setPanoDeg = (val) => {
-		const selDeg = parseInt(val);
-		this.setState({selDeg})
-		this.panoMesh.rotation.y = Math.PI*2/360 * selDeg;
-	}
-
 	render() {
 		const {pageKey, rotate, envMode, light, tSize, selPower} = this.state, {innerWidth, innerHeight} = window, land = innerWidth>innerHeight;
 		return (
-			<div className={`back-board canvas ${pageKey==='canvas'?'active':''}`} style={{width:land?tSize.w:tSize.h+'px', height:land?tSize.h:tSize.w+'px'}}>
+			<div className={`back-board canvas ${pageKey==='canvas'?'active':''}`} style={{width:tSize.w, height:tSize.h, left:tSize.l}}>
 				<div id='container'></div>
 				<div className='set-item set-light' onClick={()=>this.setState({light: !light}, () => {this.setLightAnimate(this.state.light);  }) }>
 					<div className='circle'><img src={light?imgIconLight:imgIconUnLight} alt=''></img></div>

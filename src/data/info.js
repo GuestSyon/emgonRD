@@ -20,8 +20,6 @@ import imgLogoArrow from '../assets/images/trans/logo-arrow.png';
 import imgPanoBack from '../assets/images/pano-back.jpg';
 import imgPanoRound from '../assets/images/pano-corner.png';
 import imgPanoBottom from '../assets/images/pano-bottom.png';
-import imgPanoRoundNight from '../assets/images/pano-corner-night.png';
-import imgPanoBottomNight from '../assets/images/pano-bottom-night.png';
 import imgNight2 from '../assets/images/night_2.jpg';
 
 import imgEnvPX from '../assets/images/px.png';
@@ -31,12 +29,15 @@ import imgEnvNX from '../assets/images/nx.png';
 import imgEnvNY from '../assets/images/ny.png';
 import imgEnvNZ from '../assets/images/nz.png';
 
+import imgMirror from '../assets/images/back_LF.jpg';
+
 import imgLeatherNormal from '../assets/images/leather_normal_0.jpg';
 
 autoPlay(true);
 const imgEnv0Arr = [imgEnvPX, imgEnvNX, imgEnvPY, imgEnvNY, imgEnvPZ, imgEnvNZ];
+const imgEnvMirror = [imgMirror, imgMirror, imgMirror, imgMirror, imgMirror, imgMirror];
 
-export const modelH = 4, serverUrl = 'https://rungra888.com/emogonRD/', apiUrl =  serverUrl + 'admin/';
+export const modelH = 4, transTime = 1000, serverUrl = 'https://rungra888.com/emogonRD/', apiUrl = serverUrl + 'admin/'; // 'https://samsung.thetunagroup.com/'
 
 export function SetLogoCustom(logoCustom, logoMesh, arrowArr) {
 	if (!logoMesh) return;
@@ -103,8 +104,32 @@ export function SetTween(obj, attr, info, easeTime) {
 	new Tween(obj).to( tweenData , easeTime ).easing(easeType).start();
 }
 
+export function SetColTween(mat, target, easeTime) {
+	const stepCount = 20, oriCol = {...mat.color};
+	var colDelta = {};
+	['r', 'g', 'b'].forEach(axis => { colDelta[axis] = (target[axis] - oriCol[axis])/stepCount; });
+	for (let i = 0; i < stepCount; i++) {
+		setTimeout(() => {
+			mat.color.setRGB( oriCol.r+colDelta.r*i,
+							  oriCol.g+colDelta.g*i,
+							  oriCol.b+colDelta.b*i);
+		}, i * (easeTime/stepCount));
+	}
+	setTimeout(() => { mat.color.setRGB( target.r, target.g, target.b); }, easeTime+100);
+}
+
+function getIntCol(str, a, b) {
+	return parseInt(str.substring(a, b), 16)/256;
+}
+
 export function SetColor(bodyMeshArr, selCol) {
-	bodyMeshArr.forEach(child => { child.material.color.setHex(selCol); });
+	var strHex = selCol.toString(16);
+	while (strHex.length < 6) { strHex = '0' + strHex; }
+	const rInt = getIntCol(strHex, 0, 2), gInt = getIntCol(strHex, 2, 4), bInt = getIntCol(strHex, 4, 6);
+	bodyMeshArr.forEach(child => {
+		SetColTween(child.material, {r:rInt, g:gInt, b:bInt}, transTime);
+		// child.material.color.setHex(selCol);
+	});
 }
 
 export function GetClickObj(e, arr, camera, wSize, mouse, raycaster) {
@@ -134,11 +159,30 @@ function GetMat(img) {
 	return new THREE.MeshBasicMaterial({map:GetMap(img), transparent:true, side:2});
 }
 
-export const panoMat = {sun:{back:GetMap(imgPanoBack),	round:GetMat(imgPanoRound), bottom:GetMat(imgPanoBottom) },
-						moon:{back:GetMap(imgNight2), 	round:GetMat(imgPanoRoundNight), bottom:GetMat(imgPanoBottomNight)}}
+export function GetPanoMesh (key) {
+	const panoR = 15, panoInR = panoR * 0.9, roundH = 3;
+	var geo, img, rot = {x:0, y:0, z:0}, posY = 0;
+	if (key==='pano_sun' || key==='pano_moon') {
+		geo = new THREE.SphereGeometry(key==='pano_sun'?panoR+0.5:panoR, 128, 128);
+		if (key==='pano_sun') {img = imgPanoBack; rot = {x:0, y:3.1416, z:-0.03}; posY = 1.2;}
+		else if (key==='pano_moon') { img = imgNight2; rot.y = Math.PI/180 * 100; posY = 1.2;}
+	} else if (key==='pano_round') {
+		geo = new THREE.CylinderGeometry(panoInR, panoInR, roundH, 64, 1, true);
+		img = imgPanoRound; posY = roundH/2;
+	} else if (key==='pano_bottom') {
+		geo = new THREE.PlaneGeometry(panoInR * 2+0.1, panoInR * 2+0.1);
+		img = imgPanoBottom; posY = 0.05; rot.x = Math.PI/-2;
+	}
+	const panoMesh = new THREE.Mesh(geo, GetMat(img));
+	panoMesh.name = key;
+	if (key==='pano_sun') panoMesh.material.transparent = false;
+	panoMesh.rotation.set(rot.x, rot.y, rot.z); panoMesh.position.y = posY;
+	return panoMesh;
+}
 
 export function CustomModel(object, self, gltf) {
-	const envMap = new THREE.CubeTextureLoader().load(imgEnv0Arr);
+	const envMap = new THREE.CubeTextureLoader().load(imgEnv0Arr), mirrorMap = new THREE.CubeTextureLoader().load(imgEnvMirror);
+	mirrorMap.repeat.set(5, 5);
 	const normalMap3 = new THREE.CanvasTexture( new FlakesTexture() );
 	normalMap3.wrapS = THREE.RepeatWrapping;
 	normalMap3.wrapT = THREE.RepeatWrapping;
@@ -167,7 +211,7 @@ export function CustomModel(object, self, gltf) {
 	self.goldMat = bodyMat.clone(); self.goldMat.reflectivity = 1; self.goldMat.color.setHex(0x605D3C); self.goldMat.side = 2;
 	object.traverse(child => {
 		if (child.name.includes('body')) { child.material = bodyMat; self.bodyMeshArr.push(child); }
-		if (child.name.includes('PLATTFORM')) self.bottomArr.push(child);
+		if (child.name.includes('PLATTFORM')) {child.receiveShadow = true; self.bottomArr.push(child);}
 		if (child.name.includes('back')) {child.oriBackPos = Math.round(child.position.x * 1000)/1000; self.backArr.push(child);}
 		if (child.name.includes('box')) self.boxArr.push(child);
 		if (child.name.includes('box_back')) self.rearArr.push(child);
@@ -203,23 +247,27 @@ export function CustomModel(object, self, gltf) {
 			if (child.material.length) {
 				child.material.forEach(mat => { mat.side = 2; });
 			} else  {child.material.side = 2; child.castShadow = true;}
+			if (child.name.includes('shadow')) {
+				child.receiveShadow = true; child.castShadow = false;
+			}
 		}
 		if (child.name.includes('logo')) {
 			child.castShadow = false; child.visible = false; child.material = new THREE.MeshBasicMaterial({transparent:true, color:0xFFFFFF});
 			if (child.name==='logo_plane') {self.logoMesh = child;}
 			else if (child.name.includes('logo_arrow')) {child.material.map = mapLogoArrow; child.material.opacity = 0.7; self.logoArrowArr.push(child);}
 		} else if (child.name === 'FRONT_BLACK') {
-			child.material = new THREE.MeshPhysicalMaterial({ clearcoat:0.9, color:0x000000, envMap, reflectivity: 1});
+			child.material = new THREE.MeshPhysicalMaterial({ clearcoat:0.9, color:0x000000, envMap, reflectivity: 1, side:2});
 			// child.material = new THREE.MeshStandardMaterial({envMap, reflectivity:0.9, color:0x151515, metalness:0.4, roughness:0.6});
 		} else if (child.name.includes('glass')) {
 			var color = 0xEEEEEE, opacity = 0.4;
 			if (child.name.includes('glassDark')) {color = 0x555555; opacity = 0.8}
 			child.material = new THREE.MeshPhongMaterial({envMap, transparent:true, opacity, color, reflectivity:1});
 			if (child.name.includes('glassLight')) self.glassLightArr.push(child);
+			// if (child.name==='PRIME_glassDark') console.log(child);
 		} else if (child.name==='sim_front_black') {
 			child.material = new THREE.MeshPhysicalMaterial({ color:0x333333, envMap, reflectivity: 1, roughness:0.5, metalness:1, side:2});
-		} else if (child.name==='mirror_plane') {
-			child.material = new THREE.MeshPhongMaterial({envMap, color:0xFFFFFF, emissive:0xFFFFFF, shininess:100, reflectivity:1});
+		} else if (child.name.includes('mirror_plane')) {
+			child.material = new THREE.MeshBasicMaterial({envMap:mirrorMap, color:0xFFFFFF, shininess:100, reflectivity:1});
 		} else if (child.name==='sim_middle_grey') { // simLeder_yellow
 			if (gltf) child.children[0].material = simGreyMat; else child.material[0] = simGreyMat;
 		} else if (child.name==='simLeader_grey') {

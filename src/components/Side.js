@@ -1,11 +1,13 @@
 import React from 'react';
 import { serverUrl, GetLangLabel } from '../data/info';
 import imgChevron from '../assets/images/chevron.jpg';
+import { transTime } from '../data/info';
 
 export default class SideComponent extends React.Component {
 	constructor(props) {
 		super(props);
-		const {pageKey, lan, rear, brake, strap, frontArr, selType, logoCustom, powerArr, simRearArr, rearInfo, brakeInfo, strapInfo, batteryInfo, logoInfo, selBattery, labelOther} = props, openTab = {color:true, front:true, option:true, rear:true, brake:true, strap:true, logo:true, power:true, battery:true, simRear:true, headlight:true};
+		const {device, pageKey, lan, rear, brake, strap, frontArr, selType, logoCustom, powerArr, simRearArr, rearInfo, brakeInfo, strapInfo, batteryInfo, logoInfo, selBattery, labelOther} = props;
+		const tab = !device || device === 'iPad', openTab = {color:true, front:tab, option:tab, rear:tab, brake:tab, strap:tab, logo:tab, power:tab, battery:tab, simRear:tab, headlight:tab};
 		this.state = {pageKey, lan, selFront:{}, selCol:{}, selOption:{}, rear, brake, strap, frontArr, selType, selSubPart:{}, sizeArr:[], colArr:[], contArr:[], optionArr:[], selectArr:[], catArr:[], protoArr:[], powerArr, simRearArr, headlightArr:[], rearInfo, brakeInfo, strapInfo, batteryInfo, selBattery, labelOther, logoInfo, openTab, priceTotal:0, logoCustom};
 	}
 
@@ -20,25 +22,36 @@ export default class SideComponent extends React.Component {
 				});
 			}
 		});
-		if (this.state.colArr.length && this.state.selCol && this.state.selCol.hex !== nextProps.selCol) {
+		const {colArr, selCol, contArr, selSubPart, selectArr, sizeArr, selFront, optionArr, selOption} = this.state;
+		if (colArr.length && selCol && selCol.hex !== nextProps.selCol) {
 			this.setState({selCol:this.getColArr().find(item=>item.hex===nextProps.selCol)}, () => this.setTotalPrice());
 		}
-		if (this.state.contArr.length && this.state.selSubPart.key !== nextProps.selSubPart) {
-			const selSubPart = nextProps.selSubPart?this.state.selectArr.find(item=>item.key===nextProps.selSubPart):{};
+		if (contArr.length && selSubPart.key !== nextProps.selSubPart) {
+			const selSubPart = nextProps.selSubPart?selectArr.find(item=>item.key===nextProps.selSubPart):{};
+			this.setOptionArr(nextProps.selSubPart, selFront.key);
 			this.setState({selSubPart}, () => this.setTotalPrice()); // optionArr, 
 		}
-		if (this.state.sizeArr.length && nextProps.selFront && this.state.selFront.key !== nextProps.selFront) {
-			const brakeHide = nextProps.selFront && nextProps.selFront.includes('xl');
-			var optionArr = this.state.contArr.filter(item=>{return item.inArr.includes(nextProps.selFront)});
-			if (this.state.selSubPart.key==='easyOne') optionArr = [];
-			else if (this.state.selSubPart.key==='spaceXl') optionArr = this.state.contArr.filter(item=>{return ['basic', 'pickUp', 'cargo'].includes(item.key)});
-			this.setState({selFront:this.state.sizeArr.find(item=>item.key===nextProps.selFront), brakeHide, optionArr}, () => this.setTotalPrice());
+		if (sizeArr.length && nextProps.selFront && selFront.key !== nextProps.selFront) {
+			const newFront = nextProps.selFront;
+			const brakeHide = newFront && newFront.includes('xl');
+			const rearHideF = newFront === 'mini' || newFront === 'small' ;
+			this.setOptionArr(selSubPart.key, nextProps.selFront);
+			this.setState({selFront:sizeArr.find(item=>item.key===nextProps.selFront), brakeHide, rearHideF}, () => this.setTotalPrice());
 		}
-		if (this.state.optionArr.length && nextProps.selOption && this.state.selOption.key !== nextProps.selOption) {
-			const rearHide = (nextProps.selOption !== 'passenger' && nextProps.selOption !== 'basic');
+		if (nextProps.selOption && selOption.key !== nextProps.selOption) { // optionArr.length && 
+			const rearHideO = (nextProps.selOption !== 'passenger' && nextProps.selOption !== 'basic');
 			const inputLogo = document.getElementById('logoFile'); inputLogo.value = null;
-			this.setState({selOption:this.state.optionArr.find(item=>item.key===nextProps.selOption), rearHide, logoFile:null}, () => this.setTotalPrice());
+			const newOption = optionArr.length?optionArr.find(item=>item.key===nextProps.selOption):{};
+			this.setState({selOption:newOption, rearHideO, logoFile:null}, () => this.setTotalPrice());
 		}
+	}
+
+	setOptionArr = (selSubPartKey, selFrontKey) => {
+		const {contArr} = this.state;
+		var optionArr = contArr.filter(item=>{return item.inArr.includes(selFrontKey)});
+		if (selSubPartKey==='easyOne') optionArr = [];
+		else if (selSubPartKey==='spaceXl') optionArr = contArr.filter(item=>{return ['basic', 'pickUp', 'cargo'].includes(item.key)});
+		this.setState({optionArr}, () => {this.setTotalPrice();})
 	}
 
 	setOpenTab = (key) => {
@@ -48,7 +61,7 @@ export default class SideComponent extends React.Component {
 	}
 
 	setTotalPrice = () => {
-		const {selSubPart, selCol, selFront, selOption, rearInfo, brakeInfo, logoInfo, rear, brake, rearHide, brakeHide, logoImg, proto, protoArr, selHeadlight, headlightArr, simRearArr, selSimRear, strapInfo, strap} = this.state;
+		const {selSubPart, selCol, selFront, selOption, rearInfo, brakeInfo, logoInfo, rear, brake, rearHideO, rearHideF, brakeHide, logoImg, proto, protoArr, selHeadlight, headlightArr, simRearArr, selSimRear, strapInfo, strap} = this.state;
 		var priceTotal = 0;
 		if (proto) {
 			const selProto = protoArr.find(item=>item.key===proto); priceTotal += parseFloat(selProto.price);
@@ -69,7 +82,7 @@ export default class SideComponent extends React.Component {
 		if (selCol)		priceTotal += parseFloat(selCol.price, 10);
 		if (selFront)	priceTotal += parseFloat(selFront.price, 10);
 		if (selOption && selOption.price) priceTotal += parseFloat(selOption.price, 10);
-		if (rearInfo && rear && !rearHide) priceTotal += parseFloat(rearInfo.price, 10);
+		if (rearInfo && rear && !rearHideO && !rearHideF) priceTotal += parseFloat(rearInfo.price, 10);
 		if (brakeInfo && brake && !brakeHide) priceTotal += parseFloat(brakeInfo.price, 10);
 		if (logoInfo && logoImg) priceTotal += parseFloat(logoInfo.price, 10);
 		priceTotal = Math.round(priceTotal);
@@ -134,7 +147,7 @@ export default class SideComponent extends React.Component {
 	}
 
 	render() {
-		const { lan, selFront, selCol, rear, brake, sizeArr, powerArr, simRearArr, headlightArr, selPower, rearInfo, brakeInfo, strapInfo, batteryInfo, selBattery, selOption, optionArr, openTab, priceTotal, selSubPart, rearHide, brakeHide, catArr, logoFile, logoInfo, logoImg, logoCustom, logoControl, tooltip, tooltipInner, proto, labelOther, selSimRear, selHeadlight, strap} = this.state;
+		const { lan, selFront, selCol, rear, brake, sizeArr, powerArr, simRearArr, headlightArr, selPower, rearInfo, brakeInfo, strapInfo, batteryInfo, selBattery, selOption, optionArr, openTab, priceTotal, selSubPart, rearHideO, rearHideF, brakeHide, catArr, logoFile, logoInfo, logoImg, logoCustom, logoControl, tooltip, tooltipInner, proto, labelOther, selSimRear, selHeadlight, strap} = this.state;
 		return (
 			<div className={`side`}>
 				<div className='side-outer side-header'>
@@ -147,7 +160,14 @@ export default class SideComponent extends React.Component {
 						<div className='part-content'>
 							<div className='color-wrapper flex'>
 								{this.getColArr().map((item, idx) =>
-									<div className={`color-item ${selCol&&item.hex===selCol.hex?'active':''}`} style={{backgroundImage:'linear-gradient('+item.description+')'}} onClick={()=>this.props.setSelCol(item.hex)} key={idx}>
+									<div className={`color-item ${selCol&&item.hex===selCol.hex?'active':''}`} style={{backgroundImage:'linear-gradient('+item.description+')'}}
+										onClick={()=>{
+											if (this.timeTrans || selCol===item.hex) return;
+											this.timeTrans = true;
+											this.props.setSelCol(item.hex);
+											setTimeout(() => { this.timeTrans = false; }, transTime);
+										}}
+										key={idx}>
 									</div>
 								) }
 							</div>
@@ -203,7 +223,7 @@ export default class SideComponent extends React.Component {
 							</div>
 						</div>
 					}
-					<div className={`part rear-part ${rearHide?'hide':''} ${openTab.rear?'open':''} ${proto?'hide':''}`}>
+					<div className={`part rear-part ${rearHideO?'hide':''} ${rearHideF?'hide':''} ${openTab.rear?'open':''} ${proto?'hide':''}`}>
 						<div className='part-title' onClick={()=>this.setOpenTab('rear')}><img src={imgChevron} alt=''></img><label>{GetLangLabel(catArr[3], lan)}</label></div>
 						<div className='part-content'>
 							<div className={`option-item ${rear?'active':''}`} onClick={() => { this.props.setRear(!rear); }}>
