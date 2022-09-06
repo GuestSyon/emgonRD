@@ -28,10 +28,11 @@ export default class StartTempComponent extends React.Component {
 		const dPosX = Math.abs(ePos.x - sPos.x); 
 		if (Math.abs(ePos.y - sPos.y) > dPosX || dPosX < 50) {return;}
 		const axis = innerWidth > innerHeight ? 'x':'y';
+		const deviceWidth = axis==='x'?tSize.w:(tSize.h-50), delta = axis==='x'?0:50;
 		var typeKey;
-		if 		(sPos[axis] < tSize.w * 1 / 3) typeKey = 'custom';
-		else if (sPos[axis] < tSize.w * 2 / 3) typeKey = 'premade';
-		else if (sPos[axis] < tSize.w * 3 / 3) typeKey = 'proto';
+		if 		(sPos[axis] < deviceWidth * 1 / 3 + delta) typeKey = 'custom';
+		else if (sPos[axis] < deviceWidth * 2 / 3 + delta) typeKey = 'premade';
+		else if (sPos[axis] < deviceWidth * 3 / 3 + delta) typeKey = 'proto';
 		const dir = (ePos.x > sPos.x) ? -1: 1;
 		this.clickArrow(typeKey, dir);
 	}

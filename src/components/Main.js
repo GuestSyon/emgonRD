@@ -188,6 +188,7 @@ export default class MainComponent extends React.Component {
 			if (item.part === 'color') {
 				item.str = '#'+item.piece;
 				item.hex = parseInt(item.piece, 16);
+				item.key = item.name;
 				// item.hex = hex.toString(16)
 				colArr.push(item);
 			} else if (item.part === 'windshield') {
@@ -223,7 +224,6 @@ export default class MainComponent extends React.Component {
 		const pageWidth = dir==='land'?screenWidth:screenHeight, pageHeight = dir==='port'?screenWidth:screenHeight;
 		const w = device==='ios'?pageWidth:innerWidth, h=innerHeight;
 		const wSize = getWSize(Math.max(w, h), Math.min(w, h), dir);
-		console.log(wSize);
 		this.setState({dir, tSize:{w, h, l:(innerWidth-w)/2}, wSize});
 	}
 

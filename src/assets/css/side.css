@@ -19,6 +19,7 @@
 /* .side-header .header-top {margin-bottom: 5px;} */
 .side-header .header-top {margin-bottom: 10px;}
 .side-header .header-top label { font-family: 'mainThin'; font-size: 38px; font-weight: 500;}
+.side-header .outer-line {height: 38px;}
 
 .side-gap {height: 10px; width: 100%; background-color: white; }
 .side-wrapper {position: relative; background-color: white; width: calc(100% - 5px); height: calc(100% - 280px);}
@@ -93,6 +94,7 @@
 .small-scale .side-outer .outer-line {font-size: 28px;}
 .small-scale .side-header { padding-bottom: 20px; padding-top: 40px; }
 .small-scale .side-header .header-top label {font-size: 28px;}
+.small-scale .side-header .outer-line {height: 28px;}
 .small-scale .side-outer .outer-price {font-size: 28px; bottom: 22px;}
 
 .small-scale .side-wrapper {height: calc(100% - 215px);}
@@ -131,7 +133,8 @@
 .mobile .side-outer .outer-line {font-size: 24px;}
 .mobile .side-header .header-top {margin-bottom: 5px; margin-top: 5px;}
 .mobile .side-header .header-top label {font-size: 24px;}
-.mobile .side-outer .outer-price {font-size: 24px; bottom: 15px;}
+.mobile .side-header .outer-line {height: 24px;}
+.mobile .side-outer .outer-price {font-size: 24px; bottom: 13px;}
 
 .mobile .side { padding: 0; padding-left: 5px;}
 
@@ -177,7 +180,7 @@
 	.mobile .side { width: 40vw; right: 0px;}
 	.mobile.iPad .side { width: 400px;}
 	.mobile .side-outer .outer-line {font-size: 20px;}
-	.mobile .side-outer .outer-price {font-size: 20px; bottom: 10px;}
+	.mobile .side-outer .outer-price {font-size: 20px; bottom: 12px;}
 	.mobile .side-header .header-top label {font-size: 20px;}
 	.mobile .side-wrapper {height: calc(100% - 130px);}
 	.mobile .side .part .part-title {padding: 5px 10px;}
