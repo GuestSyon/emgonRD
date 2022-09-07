@@ -15,6 +15,7 @@ import imgIconMoon from '../assets/images/icon_moon_black.png';
 import imgIconSun from '../assets/images/icon_sun_black.png';
 import imgIconLight from '../assets/images/icon_light_black.png';
 import imgIconUnLight from '../assets/images/icon_unlight_black.png';
+import imgIconCamera from '../assets/images/icon_camera_black.png';
 import imgPowerBloom from '../assets/images/bloom_power.png';
 
 import imgFloor from '../assets/images/floor.jpg';
@@ -222,7 +223,7 @@ export default class CanvasComponent extends React.Component {
 
 	initScene = () => {
 		const {wSize} = this.state;
-		this.renderer = new THREE.WebGLRenderer({antialias:true});
+		this.renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer: true});
 		this.renderer.setSize(wSize.width, wSize.height);
 		this.renderer.shadowMap.enabled = true;
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -464,11 +465,18 @@ export default class CanvasComponent extends React.Component {
 		this.camera.updateProjectionMatrix();
 	}
 
+	clickCamera = () => {
+		var canvas = document.getElementsByTagName("canvas")[0];
+		var image = canvas.toDataURL("image/jpg");
+		var downBtn = document.getElementById("downloadButton");
+		downBtn.href = image;
+	}
+
 	render() {
 		const {pageKey, rotate, envMode, light, tSize, selPower} = this.state, {innerWidth, innerHeight} = window, land = innerWidth>innerHeight;
 		return (
 			<div className={`back-board canvas ${pageKey==='canvas'?'active':''}`} style={{width:tSize.w, height:tSize.h, left:tSize.l}}>
-				<div id='container'></div>
+				<div className='container' id='container'></div>
 				<div className='set-item set-light' onClick={()=>this.setState({light: !light}, () => {this.setLightAnimate(this.state.light);  }) }>
 					<div className='circle'><img src={light?imgIconLight:imgIconUnLight} alt=''></img></div>
 				</div>
@@ -478,6 +486,9 @@ export default class CanvasComponent extends React.Component {
 				<div className='set-item set-sun' onClick={()=> this.setEnvMode(envMode==='sun'?'moon':'sun') }>
 					<div className='circle'><img src={envMode==='sun'?imgIconSun:imgIconMoon} alt=''></img></div>
 				</div>
+				<a className="set-item set-camera" id="downloadButton" download="EmogonRD_screen_capture.jpg" href="" onClick={this.clickCamera}>
+					<div className='circle'><img className="camera" src={imgIconCamera} alt=""></img></div>
+				</a>
 			</div>
 		);
 	}

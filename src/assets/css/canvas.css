@@ -6,6 +6,7 @@
 .set-item .circle {width: 50px; height: 50px; border-radius: 50%; border: 5px solid rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center; background-color: white;}
 .set-item .circle img {max-width: 30px; max-height: 30px; opacity: 0.8;}
 .set-item.set-back {top: 50px;}
+.set-item.set-camera {bottom: 350px;}
 .set-item.set-light {bottom: 250px;}
 .set-item.set-rotate {bottom: 150px;}
 .set-item.set-sun {bottom: 50px;}
@@ -38,6 +39,7 @@
 .small-scale .set-item .circle img {width: 27px; height: 27px;}
 
 .small-scale .set-item.set-back {top: 40px;}
+.small-scale .set-item.set-camera {bottom: 280px;}
 .small-scale .set-item.set-light {bottom: 200px;}
 .small-scale .set-item.set-rotate {bottom: 120px;}
 .small-scale .set-item.set-sun {bottom: 40px;}
@@ -61,6 +63,7 @@
 	.mobile .set-item.set-light {bottom: 15px;}
 	.mobile .set-item.set-rotate {bottom: 15px; left: 80px;}
 	.mobile .set-item.set-sun {bottom: 15px; left: 140px;}
+	.mobile .set-item.set-camera {bottom: 15px; left: 200px;}
 }
 
 .canvas .img-test-wrapper {position: absolute; top: 50px; left: 100px;}
